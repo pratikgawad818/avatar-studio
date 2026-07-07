@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Avatar Studio</title>
+  <link rel="stylesheet" href="/static/style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- ── Animated BG ── -->
+<div class="bg-mesh">
+  <div class="mesh-orb o1"></div>
+  <div class="mesh-orb o2"></div>
+  <div class="mesh-orb o3"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SIDEBAR NAV
+══════════════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-mark">A</span>
+    <span class="logo-name">Avatar Studio</span>
+    <span class="logo-badge">PRO</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="snav-btn active" data-view="studio">
+      <span class="snav-icon">🎬</span>
+      <span>Create Video</span>
+    </button>
+    <button class="snav-btn" data-view="voices">
+      <span class="snav-icon">🎙️</span>
+      <span>Voice Lab</span>
+    </button>
+    <button class="snav-btn" data-view="avatars">
+      <span class="snav-icon">🧑‍💼</span>
+      <span>Avatars</span>
+    </button>
+    <button class="snav-btn" data-view="library">
+      <span class="snav-icon">📁</span>
+      <span>Library</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-status" id="sidebar-status">
+      <div class="status-dot idle" id="status-dot"></div>
+      <span id="status-label">Ready</span>
+    </div>
+    <div class="sidebar-info">
+      <span>100% Local · Free</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════════════════ -->
+<main class="main-content">
+
+  <!-- ── STUDIO (Default view) ──────────────────────── -->
+  <section class="view active" id="view-studio">
+    <div class="view-header">
+      <div>
+        <h1>Create Video</h1>
+        <p class="view-sub">Select avatar, voice, write script → generate</p>
+      </div>
+      <div class="header-actions">
+        <span class="est-badge" id="est-badge">~0 min</span>
+      </div>
+    </div>
+
+    <div class="studio-layout">
+      <!-- ── Left: Canvas Preview ── -->
+      <div class="studio-left">
+        <div class="canvas-preview" id="canvas-preview">
+          <div class="canvas-placeholder" id="canvas-placeholder">
+            <div class="canvas-avatar-slot" id="canvas-avatar-slot">
+              <span>Select an avatar →</span>
+            </div>
+          </div>
+          <img class="canvas-avatar-img hidden" id="canvas-avatar-img" src="" alt="avatar"/>
+          <img class="canvas-bg-img hidden" id="canvas-bg-img" src="" alt="background"/>
+          <div class="canvas-overlay">
+            <span class="canvas-res" id="canvas-res">1280×720</span>
+          </div>
+        </div>
+
+        <!-- Background picker -->
+        <div class="section-card compact">
+          <div class="section-card-header">
+            <h3>Background</h3>
+            <span class="tag">optional</span>
+          </div>
+          <div class="bg-gallery" id="bg-gallery"></div>
+          <div class="upload-drop mini" id="drop-bg">
+            <span>+ Upload</span>
+            <input type="file" id="input-bg" accept=".jpg,.jpeg,.png,.mp4,.mov" hidden/>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Right: Controls ── -->
+      <div class="studio-right">
+
+        <!-- Avatar picker -->
+        <div class="section-card compact">
+          <div class="section-card-header">
+            <h3>Avatar</h3>
+            <button class="btn-ghost btn-xs" onclick="switchView('avatars')">+ Add</button>
+          </div>
+          <div class="picker-grid" id="studio-avatar-picker">
+            <div class="picker-empty">No avatars — upload a photo first</div>
+          </div>
+        </div>
+
+        <!-- Voice -->
+        <div class="section-card compact">
+          <div class="section-card-header">
+            <h3>Voice</h3>
+            <div class="seg-group seg-sm" id="voice-mode-group">
+              <button class="seg active" data-value="fast">⚡ Fast</button>
+              <button class="seg" data-value="clone">🎤 Clone</button>
+            </div>
+          </div>
+          <!-- Fast mode: edge-tts voice selector -->
+          <div id="voice-fast-panel">
+            <select id="edge-voice" class="select-input">
+              <option value="en-US-GuyNeural">Guy — US Male</option>
+              <option value="en-US-JennyNeural">Jenny — US Female</option>
+              <option value="en-GB-RyanNeural">Ryan — UK Male</option>
+              <option value="en-GB-SoniaNeural">Sonia — UK Female</option>
+              <option value="en-IN-PrabhatNeural">Prabhat — Indian Male</option>
+              <option value="en-IN-NeerjaNeural">Neerja — Indian Female</option>
+              <option value="en-AU-WilliamNeural">William — AU Male</option>
+              <option value="en-AU-NatashaNeural">Natasha — AU Female</option>
+            </select>
+          </div>
+          <!-- Clone mode: voice clone picker -->
+          <div id="voice-clone-panel" class="hidden">
+            <div class="picker-grid" id="studio-voice-picker">
+              <div class="picker-empty">No clones — go to Voice Lab</div>
+            </div>
+            <div class="field-row mt-8">
+              <input type="text" id="voice-transcript" class="text-input" placeholder="Transcript of your voice sample (optional, improves quality)"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Script -->
+        <div class="section-card compact">
+          <div class="section-card-header">
+            <h3>Script</h3>
+            <span id="studio-word-count" class="tag">0 words</span>
+          </div>
+          <textarea id="studio-script" class="textarea-script"
+            placeholder="Type what your avatar will say...&#10;&#10;Keep it under 50 words for fast results."></textarea>
+          <div class="script-actions">
+            <button class="btn-ghost btn-xs" id="btn-clear-script">Clear</button>
+            <button class="btn-ghost btn-xs" id="btn-sample-script">Sample</button>
+          </div>
+        </div>
+
+        <!-- Settings row -->
+        <div class="settings-bar">
+          <div class="setting-pill">
+            <label>Ratio</label>
+            <select id="sel-ratio" class="pill-select">
+              <option value="16:9">16:9 Landscape</option>
+              <option value="9:16">9:16 Portrait</option>
+              <option value="1:1">1:1 Square</option>
+              <option value="4:5">4:5 Instagram</option>
+              <option value="4:3">4:3 Classic</option>
+            </select>
+          </div>
+          <div class="setting-pill">
+            <label>Position</label>
+            <select id="sel-position" class="pill-select">
+              <option value="center">Center</option>
+              <option value="lower_center">Lower</option>
+              <option value="lower_left">Left</option>
+              <option value="lower_right">Right</option>
+            </select>
+          </div>
+          <div class="setting-pill">
+            <label>Subtitles</label>
+            <select id="sel-substyle" class="pill-select">
+              <option value="netflix">Netflix</option>
+              <option value="bold_white">Bold</option>
+              <option value="yellow">Yellow</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="setting-pill">
+            <label>Quality</label>
+            <select id="sel-resolution" class="pill-select">
+              <option value="1280x720">720p</option>
+              <option value="1920x1080">1080p</option>
+              <option value="854x480">480p</option>
+            </select>
+          </div>
+          <div class="setting-pill">
+            <label>Speed</label>
+            <input type="range" id="voice-speed" min="0.8" max="1.3" step="0.05" value="1.0" class="pill-range"/>
+          </div>
+          <div class="setting-pill">
+            <label>Scale</label>
+            <input type="range" id="avatar-scale" min="0.3" max="0.8" step="0.05" value="0.55" class="pill-range"/>
+          </div>
+        </div>
+
+        <!-- Generate -->
+        <button class="btn-generate" id="btn-generate">
+          <span class="gen-spark">⚡</span>
+          <span id="gen-label">Generate Video</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Progress overlay ── -->
+    <div class="progress-overlay hidden" id="progress-overlay">
+      <div class="progress-card">
+        <div class="prog-header">
+          <h2>Generating your video...</h2>
+          <div class="prog-stats">
+            <span id="prog-elapsed" class="prog-elapsed">00:00</span>
+            <span id="prog-pct" class="prog-pct">0%</span>
+          </div>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        <p class="prog-step" id="prog-step">Starting...</p>
+        <div class="prog-timeline">
+          <div class="pt-step" id="pt-voice"><div class="pt-dot"></div><span>Voice</span></div>
+          <div class="pt-line"></div>
+          <div class="pt-step" id="pt-lipsync"><div class="pt-dot"></div><span>Lip Sync</span></div>
+          <div class="pt-line"></div>
+          <div class="pt-step" id="pt-background"><div class="pt-dot"></div><span>Composite</span></div>
+          <div class="pt-line"></div>
+          <div class="pt-step" id="pt-subtitles"><div class="pt-dot"></div><span>Subtitles</span></div>
+          <div class="pt-line"></div>
+          <div class="pt-step" id="pt-done"><div class="pt-dot"></div><span>Done</span></div>
+        </div>
+        <div class="prog-log" id="prog-log">
+          <p class="log-line">Initialising pipeline...</p>
+        </div>
+        <button class="btn-cancel" id="btn-cancel" onclick="cancelGeneration()">✕ Cancel Generation</button>
+      </div>
+    </div>
+
+    <!-- ── Result overlay ── -->
+    <div class="result-overlay hidden" id="result-overlay">
+      <div class="result-card">
+        <div class="result-badge">✓</div>
+        <h2>Video Ready!</h2>
+        <div class="result-video-wrap">
+          <video id="result-video" controls playsinline></video>
+        </div>
+        <div class="result-actions">
+          <a id="btn-download" class="btn-primary" download>⬇ Download MP4</a>
+          <button class="btn-secondary" id="btn-new-video">+ Create Another</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Error overlay ── -->
+    <div class="error-overlay hidden" id="error-overlay">
+      <div class="error-card">
+        <div class="error-icon">⚠️</div>
+        <h3>Generation failed</h3>
+        <p id="error-msg" class="error-msg"></p>
+        <button class="btn-secondary" id="btn-retry">Try Again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── VOICE LAB ─────────────────────────────────── -->
+  <section class="view" id="view-voices">
+    <div class="view-header">
+      <div>
+        <h1>Voice Lab</h1>
+        <p class="view-sub">Record or upload voice samples for cloning</p>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>🎤 Record Voice</h2>
+        <span class="tag">15–30s recommended</span>
+      </div>
+      <div class="record-area">
+        <div class="field-row">
+          <input type="text" id="voice-name-input" class="text-input" placeholder="Voice name (e.g. My Voice)"/>
+        </div>
+        <div class="waveform-box">
+          <canvas id="waveform-canvas" width="600" height="80"></canvas>
+          <div class="waveform-idle-msg" id="waveform-idle">Click Record to start</div>
+        </div>
+        <div class="record-timer" id="record-timer">00:00</div>
+        <div class="record-controls">
+          <button class="btn-record" id="btn-record"><span class="rec-dot"></span> Record</button>
+          <button class="btn-stop hidden" id="btn-stop"><span>⏹</span> Stop</button>
+          <button class="btn-ghost btn-sm hidden" id="btn-playback">▶ Play</button>
+          <button class="btn-primary btn-sm hidden" id="btn-save-recording">✓ Save</button>
+          <button class="btn-ghost btn-sm hidden" id="btn-discard-recording">✕ Discard</button>
+        </div>
+        <audio id="playback-audio" style="display:none"></audio>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>📂 Upload Voice</h2>
+        <span class="tag">WAV · MP3 · M4A</span>
+      </div>
+      <div class="upload-drop" id="drop-voice-upload">
+        <div class="drop-body">
+          <span class="drop-icon">🎵</span>
+          <p>Drag & drop audio or <span class="drop-link">browse</span></p>
+        </div>
+        <input type="file" id="input-voice-upload" accept=".wav,.mp3,.m4a,.ogg,.flac" hidden/>
+      </div>
+      <div class="field-row mt-10">
+        <input type="text" id="upload-voice-name" class="text-input" placeholder="Voice name"/>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Your Voices</h2>
+        <button class="btn-ghost btn-xs" id="btn-refresh-voices">↻</button>
+      </div>
+      <div class="voice-grid" id="voice-grid">
+        <div class="empty-state"><span>🎙️</span><p>No voices yet</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AVATARS ────────────────────────────────────── -->
+  <section class="view" id="view-avatars">
+    <div class="view-header">
+      <div>
+        <h1>Avatars</h1>
+        <p class="view-sub">Upload front-facing photos for lip sync</p>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>📸 Add Photo</h2>
+        <span class="tag">JPG · PNG · WEBP</span>
+      </div>
+      <div class="upload-drop" id="drop-avatar">
+        <div class="drop-body">
+          <span class="drop-icon">🧑</span>
+          <p>Drag & drop photo or <span class="drop-link">browse</span></p>
+        </div>
+        <input type="file" id="input-avatar" accept=".jpg,.jpeg,.png,.webp" hidden/>
+      </div>
+      <div class="field-row mt-10">
+        <input type="text" id="avatar-name-input" class="text-input" placeholder="Avatar name"/>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <h2>Your Avatars</h2>
+        <button class="btn-ghost btn-xs" id="btn-refresh-avatars">↻</button>
+      </div>
+      <div class="avatar-grid" id="avatar-grid">
+        <div class="empty-state"><span>🧑‍💼</span><p>No avatars yet</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LIBRARY ────────────────────────────────────── -->
+  <section class="view" id="view-library">
+    <div class="view-header">
+      <div><h1>Library</h1><p class="view-sub">Your generated videos</p></div>
+      <button class="btn-ghost" id="btn-refresh-lib">↻ Refresh</button>
+    </div>
+    <div class="library-grid" id="library-grid">
+      <div class="empty-state full"><span>🎬</span><p>No videos yet</p></div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toasts" id="toasts"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

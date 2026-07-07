@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+*.egg-info/
+
+# Temp / outputs
+temp/
+outputs/
+
+# Models (too large for git)
+models/Wav2Lip/checkpoints/*.pth
+models/Wav2Lip/face_detection/detection/sfd/*.pth
+
+# OS
+.DS_Store
+*.swp
