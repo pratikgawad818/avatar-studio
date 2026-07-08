@@ -1,147 +1,127 @@
-"""
-Video generation endpoints
-"""
+"""Video generation endpoints."""
 
-from fastapi import APIRouter, HTTPException, status, Depends, Form
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from datetime import datetime
+from fastapi import APIRouter, Form, HTTPException, BackgroundTasks
+from pathlib import Path
 import json
-
-from database import get_db
-from models import Job, JobStatus
-from schemas import GenerationRequest, JobResponse, JobListResponse, EstimationRequest, EstimationResponse
-from celery_app import generate_video_task
+from datetime import datetime
+import time
+import os
 import logging
 
-logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/generation", tags=["generation"])
+logger = logging.getLogger("studio")
 
 
-@router.post("/estimate", response_model=EstimationResponse)
-async def estimate_generation(
-    request: EstimationRequest,
-):
-    """Estimate video generation time"""
-    words = len(request.script.strip().split())
+class JobManager:
+    """Manages video generation jobs."""
+    def __init__(self):
+        self.current_job = None
     
-    # Estimation logic (simplified)
-    if request.voice_mode == "clone":
-        voice_sec = words * 0.5  # F5-TTS is faster
-    else:
-        voice_sec = words * 0.3  # Edge-TTS estimate
-    
-    lip_sec = max(60, int(words * 2.5))
-    comp_sec = 30
-    total = int(voice_sec + lip_sec + comp_sec)
-    
-    warning = None
-    if words > 100:
-        warning = f"Script is long ({words} words). Consider under 50 words for faster results."
+    def is_running(self):
+        return self.current_job and self.current_job.get("status") == "running"
+
+
+job_manager = JobManager()
+
+
+@router.post("/estimate")
+async def estimate_time(script: str = Form(...)):
+    """Estimate video generation time based on script length."""
+    words = len(script.strip().split())
+    # Rough estimates
+    voice_sec = int(words * 0.3)  # ~0.3s per word for TTS
+    lip_sec = max(60, int(words * 2.5))  # ~2.5s per word for Wav2Lip
+    comp_sec = 30  # Compositing
+    total = voice_sec + lip_sec + comp_sec
     
     return {
-        "word_count": words,
+        "words": words,
         "estimated_seconds": total,
         "estimated_minutes": round(total / 60, 1),
         "breakdown": {
-            "voice": int(voice_sec),
-            "lipsync": int(lip_sec),
-            "composite": comp_sec,
+            "voice": voice_sec,
+            "lipsync": lip_sec,
+            "composite": comp_sec
         },
-        "warning": warning,
+        "warning": f"Script is long ({words} words). Consider under 50 words for faster results." if words > 100 else None,
     }
 
 
-@router.post("/generate", response_model=JobResponse)
-async def generate_video(
-    request: GenerationRequest,
-    user_id: str = "demo-user",  # Would come from JWT
-    db: AsyncSession = Depends(get_db),
+@router.post("/generate")
+async def generate(
+    background_tasks: BackgroundTasks,
+    script: str = Form(...),
+    voice_id: str = Form(...),
+    avatar_id: str = Form(...),
+    voice_transcript: str = Form(""),
+    voice_speed: float = Form(1.0),
+    voice_mode: str = Form("fast"),
+    voice_edge: str = Form("en-US-GuyNeural"),
+    position: str = Form("center"),
+    avatar_scale: float = Form(0.75),
+    resolution: str = Form("1920x1080"),
+    subtitles: bool = Form(True),
+    sub_style: str = Form("netflix"),
+    use_whisper: bool = Form(True),
+    whisper_model: str = Form("base"),
+    lipsync_quality: str = Form("enhanced"),
+    lower_name: str = Form(""),
+    lower_title: str = Form(""),
+    background_file: str = Form(""),
+    aspect_ratio: str = Form("16:9"),
 ):
-    """Start video generation job"""
-    # Create job record
-    job = Job(
-        user_id=user_id,
-        project_id=request.project_id,
-        status=JobStatus.PENDING,
-        script=request.script,
-        avatar_id=request.avatar_id,
-        voice_id=request.voice_id,
-        background_id=request.background_id,
-        voice_mode=request.voice_mode,
-        resolution=request.resolution,
-        aspect_ratio=request.aspect_ratio,
-    )
-    db.add(job)
-    await db.commit()
-    await db.refresh(job)
-    
-    # Start Celery task
-    config = request.dict()
-    task = generate_video_task.delay(job.id, config)
-    
-    logger.info(f"Generation job created: {job.id}")
-    return job
-
-
-@router.get("/jobs/{job_id}", response_model=JobResponse)
-async def get_job_status(job_id: str, db: AsyncSession = Depends(get_db)):
-    """Get job status and progress"""
-    result = await db.execute(select(Job).where(Job.id == job_id))
-    job = result.scalar_one_or_none()
-    
-    if not job:
+    """Start a new video generation job."""
+    if job_manager.is_running():
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found",
+            status_code=409,
+            detail="Already generating. Please wait or cancel."
         )
     
-    return job
+    # Validate files exist
+    voices_dir = Path(__file__).parent.parent.parent / "voices"
+    avatars_dir = Path(__file__).parent.parent.parent / "avatars"
+    bg_dir = Path(__file__).parent.parent.parent / "backgrounds"
+    
+    avatar_meta_f = avatars_dir / f"{avatar_id}.json"
+    if not avatar_meta_f.exists():
+        raise HTTPException(status_code=400, detail=f"Avatar {avatar_id} not found")
+    
+    # Start background job
+    import uuid
+    job_id = str(uuid.uuid4())[:8]
+    job_manager.current_job = {
+        "job_id": job_id,
+        "status": "running",
+        "progress": 0,
+        "step": "Initializing..."
+    }
+    
+    # TODO: Queue actual pipeline execution
+    # background_tasks.add_task(_run_pipeline, cfg)
+    
+    return {"ok": True, "job_id": job_id}
 
 
-@router.get("/jobs", response_model=JobListResponse)
-async def list_jobs(
-    skip: int = 0,
-    limit: int = 20,
-    user_id: str = "demo-user",  # Would come from JWT
-    db: AsyncSession = Depends(get_db),
-):
-    """List user's generation jobs"""
-    result = await db.execute(
-        select(Job)
-        .where(Job.user_id == user_id)
-        .order_by(Job.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-    )
-    jobs = result.scalars().all()
-    
-    count_result = await db.execute(select(Job).where(Job.user_id == user_id))
-    total = len(count_result.scalars().all())
-    
-    return {"jobs": jobs, "total": total}
+@router.get("/status")
+async def get_status():
+    """Get current job status."""
+    if not job_manager.current_job:
+        return {
+            "status": "idle",
+            "progress": 0,
+            "step": "Ready",
+            "output_file": None,
+            "error": None
+        }
+    return job_manager.current_job
 
 
-@router.post("/jobs/{job_id}/cancel")
-async def cancel_job(job_id: str, db: AsyncSession = Depends(get_db)):
-    """Cancel a running job"""
-    result = await db.execute(select(Job).where(Job.id == job_id))
-    job = result.scalar_one_or_none()
+@router.post("/cancel")
+async def cancel_job():
+    """Cancel the running generation job."""
+    if not job_manager.is_running():
+        return {"ok": False, "msg": "No running job to cancel"}
     
-    if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found",
-        )
-    
-    if job.status != JobStatus.RUNNING:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only running jobs can be cancelled",
-        )
-    
-    job.status = JobStatus.CANCELLED
-    job.error_message = "Cancelled by user"
-    await db.commit()
-    
-    return {"ok": True}
+    job_manager.current_job["status"] = "cancelled"
+    # TODO: Kill subprocesses
+    return {"ok": True, "msg": "Job cancelled"}
