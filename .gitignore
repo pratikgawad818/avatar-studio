@@ -4,73 +4,79 @@ __pycache__/
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+
+# Virtual Environment
 venv/
 ENV/
 env/
+.venv
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 .DS_Store
 
-# Output files
-outputs/*.mp4
-outputs/*.avi
-temp/*
-*.mp4
-*.avi
-*.wav
-*.webm
+# Environment
+.env
+.env.local
+.env.*.local
 
-# Keep folder structure
-!outputs/.gitkeep
-!temp/.gitkeep
-
-# Avatar data
-avatars/*.jpg
-avatars/*.jpeg
-avatars/*.png
-avatars/*.json
-!avatars/.gitkeep
-
-# Voice data
-voices/*.wav
-voices/*.mp3
-voices/*.json
-!voices/.gitkeep
-
-# Backgrounds
-backgrounds/*.jpg
-backgrounds/*.jpeg
-backgrounds/*.png
-backgrounds/*.mp4
-!backgrounds/.gitkeep
-
-# Models (too large)
-models/*/checkpoints/*.pth
-models/*/weights/
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
 # Logs
 *.log
 logs/
 
-# Virtual environment
-venv/
-env/
-ENV/
+# Data
+data/
+outputs/
+temp/
+avatars/
+voices/
+backgrounds/
+models/
 
-# Distribution
-dist/
-build/
-*.egg-info/
+# Node/Frontend
+node_modules/
+/frontend/dist/
+/frontend/build/
+.next/
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
 
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
 
-# System files
-.DS_Store
-Thumbs.db
+# Celery
+celerybeat-schedule
+dump.rdb
