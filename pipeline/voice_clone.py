@@ -253,14 +253,27 @@ def generate_speech(
         raise VoiceCloneError("Script is empty")
 
     if mode == "clone":
-        return generate_speech_clone(
-            script=script,
-            reference_audio=reference_audio,
-            output_path=output_path,
-            reference_text=reference_text,
-            speed=speed,
-            temp_dir=temp_dir,
-        )
+        try:
+            return generate_speech_clone(
+                script=script,
+                reference_audio=reference_audio,
+                output_path=output_path,
+                reference_text=reference_text,
+                speed=speed,
+                temp_dir=temp_dir,
+            )
+        except VoiceCloneError as e:
+            # If F5-TTS not installed or fails, fall back to edge-tts
+            if "f5_tts" in str(e).lower() or "No module named 'f5_tts'" in str(e):
+                logger.warning(f"F5-TTS not available, falling back to edge-tts: {e}")
+                return generate_speech_fast(
+                    script=script,
+                    output_path=output_path,
+                    voice=voice,
+                    speed=speed,
+                    temp_dir=temp_dir,
+                )
+            raise
     else:
         return generate_speech_fast(
             script=script,

@@ -324,8 +324,8 @@ async def generate(
     voice_mode:       str   = Form("fast"),
     voice_edge:       str   = Form("en-US-GuyNeural"),
     position:         str   = Form("center"),
-    avatar_scale:     float = Form(0.55),
-    resolution:       str   = Form("1280x720"),
+    avatar_scale:     float = Form(0.75),  # Bigger = more prominent
+    resolution:       str   = Form("1920x1080"),  # Full HD default
     subtitles:        bool  = Form(True),
     sub_style:        str   = Form("netflix"),
     use_whisper:      bool  = Form(True),
@@ -341,8 +341,12 @@ async def generate(
 
     voice_meta_f  = VOICES_DIR  / f"{voice_id}.json"
     avatar_meta_f = AVATARS_DIR / f"{avatar_id}.json"
+    
+    # Auto-fallback to fast mode if clone mode selected but voice not found or F5-TTS not installed
     if voice_mode == "clone" and not voice_meta_f.exists():
-        return JSONResponse({"error": f"Voice {voice_id} not found"}, status_code=400)
+        logger.warning(f"Voice clone mode selected but voice {voice_id} not found - falling back to fast mode")
+        voice_mode = "fast"
+    
     if not avatar_meta_f.exists():
         return JSONResponse({"error": f"Avatar {avatar_id} not found"}, status_code=400)
 
@@ -360,23 +364,15 @@ async def generate(
     try:
         w, h = [int(x) for x in resolution.split("x")]
     except Exception:
-        w, h = 1280, 720
+        w, h = 1920, 1080  # Default to Full HD
 
-    # Override with aspect ratio if provided
+    # Override with aspect ratio if provided - HIGHER QUALITY
     RATIOS = {
-        "16:9": (1280, 720), "9:16": (720, 1280), "1:1": (720, 720),
-        "4:3": (960, 720), "4:5": (720, 900),
+        "16:9": (1920, 1080), "9:16": (1080, 1920), "1:1": (1080, 1080),
+        "4:3": (1440, 1080), "4:5": (1080, 1350),
     }
     if aspect_ratio in RATIOS:
-        base_w, base_h = RATIOS[aspect_ratio]
-        # Scale to match resolution quality
-        if resolution == "1920x1080":
-            scale = 1.5
-        elif resolution == "854x480":
-            scale = 0.67
-        else:
-            scale = 1.0
-        w, h = int(base_w * scale), int(base_h * scale)
+        w, h = RATIOS[aspect_ratio]
         # Ensure even numbers
         w, h = w - (w % 2), h - (h % 2)
 

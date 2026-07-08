@@ -5,6 +5,7 @@ Compatible with FFmpeg 8.x (no -loop flag for images).
 """
 import os, subprocess, logging, shutil
 from pathlib import Path
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +117,9 @@ def composite(avatar: str, background: str, out: str,
         cmd += ["-map", "1:a", "-c:a", "aac", "-b:a", "192k"]
 
     cmd += [
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+        "-c:v", "libx264", "-preset", "slow", "-crf", "18",
+        "-profile:v", "high", "-level", "4.2",
+        "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         "-t", str(dur), out
     ]
@@ -148,7 +151,7 @@ def add_lower_third(video: str, out: str,
             f":x=40:y=ih-42:enable='between(t,{start},{end})'")
     cmd = ["ffmpeg", "-y", "-i", video,
            "-vf", ",".join(filters),
-           "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-c:a", "copy", out]
+           "-c:v", "libx264", "-preset", "fast", "-crf", "15", "-c:a", "copy", out]
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     if r.returncode != 0:
         logger.warning(f"Lower-third failed: {r.stderr[:300]}")
@@ -255,7 +258,7 @@ def burn_subtitles(video: str, srt: str, out: str,
 
     vf = ",".join(filters)
     cmd = ["ffmpeg", "-y", "-i", video, "-vf", vf,
-           "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-c:a", "copy", out]
+           "-c:v", "libx264", "-preset", "fast", "-crf", "15", "-c:a", "copy", out]
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     if r.returncode != 0:
         logger.warning(f"Subtitle burn failed — skipping. Install ffmpeg-full for subtitle support.")
@@ -301,7 +304,7 @@ def _srt_to_sec(ts: str) -> float:
 def full_pipeline(
     avatar_video: str,
     audio_path: str,
-    background: str | None,
+    background: Optional[str],
     script: str,
     out_path: str,
     temp_dir: str = "temp",

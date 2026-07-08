@@ -26,7 +26,7 @@ def _check():
 
 
 def photo_to_video(photo: str, duration: float, out: str,
-                   fps: int = 25, size: tuple = (512, 512)) -> str:
+                   fps: int = 25, size: tuple = (768, 768)) -> str:  # Higher res base
     """
     Loop a still photo into a silent MP4 of given duration.
     Uses lavfi color source + overlay approach (FFmpeg 8.x compatible).
@@ -45,7 +45,8 @@ def photo_to_video(photo: str, duration: float, out: str,
         f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black[img];"
         f"[0:v][img]overlay=0:0,format=yuv420p",
         "-t", str(dur),
-        "-an", "-c:v", "libx264", "-preset", "fast", "-crf", "18", out,
+        "-an", "-c:v", "libx264", "-preset", "slow", "-crf", "18", 
+        "-profile:v", "high", "-pix_fmt", "yuv420p", out,
     ]
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     if r.returncode != 0:
@@ -98,9 +99,10 @@ def run_wav2lip(face_video: str, audio: str, out: str,
     if r.returncode != 0:
         raise RuntimeError(f"Wav2Lip failed:\n{r.stderr[-2000:]}")
 
-    # AVI → MP4
+    # AVI → MP4 with higher quality
     cmd2 = ["ffmpeg", "-y", "-i", avi_out,
-            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-c:v", "libx264", "-preset", "slow", "-crf", "18",
+            "-profile:v", "high", "-pix_fmt", "yuv420p",
             "-c:a", "aac", "-b:a", "192k", out]
     subprocess.run(cmd2, check=True, capture_output=True, timeout=60)
     logger.info(f"Lip-sync done: {out}")

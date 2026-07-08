@@ -1,17 +1,76 @@
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
 venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Output files
+outputs/*.mp4
+outputs/*.avi
+temp/*
+*.mp4
+*.avi
+*.wav
+*.webm
+
+# Keep folder structure
+!outputs/.gitkeep
+!temp/.gitkeep
+
+# Avatar data
+avatars/*.jpg
+avatars/*.jpeg
+avatars/*.png
+avatars/*.json
+!avatars/.gitkeep
+
+# Voice data
+voices/*.wav
+voices/*.mp3
+voices/*.json
+!voices/.gitkeep
+
+# Backgrounds
+backgrounds/*.jpg
+backgrounds/*.jpeg
+backgrounds/*.png
+backgrounds/*.mp4
+!backgrounds/.gitkeep
+
+# Models (too large)
+models/*/checkpoints/*.pth
+models/*/weights/
+
+# Logs
+*.log
+logs/
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Distribution
+dist/
+build/
 *.egg-info/
 
-# Temp / outputs
-temp/
-outputs/
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Models (too large for git)
-models/Wav2Lip/checkpoints/*.pth
-models/Wav2Lip/face_detection/detection/sfd/*.pth
-
-# OS
+# System files
 .DS_Store
-*.swp
+Thumbs.db

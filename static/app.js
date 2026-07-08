@@ -4,7 +4,7 @@
 const S = {
   selectedVoiceId: null, selectedAvatarId: null, selectedBgFile: null,
   position: 'center', subStyle: 'netflix', subtitles: true,
-  resolution: '1280x720', voiceSpeed: 1.0, avatarScale: 0.55,
+  resolution: '1920x1080', voiceSpeed: 1.0, avatarScale: 0.75,
   lipSyncQuality: 'enhanced', whisperModel: 'base', useWhisper: true,
   lowerName: '', lowerTitle: '',
   voiceMode: 'fast', voiceEdge: 'en-US-GuyNeural',
