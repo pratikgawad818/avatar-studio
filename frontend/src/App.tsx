@@ -1,27 +1,20 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Container, Box } from '@mui/material'
-import Navbar from './components/Navbar'
-import Dashboard from './pages/Dashboard'
-import Generator from './pages/Generator'
-import Projects from './pages/Projects'
-import Settings from './pages/Settings'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Landing from './pages/Landing';
+import Studio from './pages/Studio';
+import Dashboard from './pages/Dashboard';
+import './App.css';
 
-function App() {
+const App: React.FC = () => {
   return (
     <Router>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <Navbar />
-        <Container maxWidth="lg" sx={{ flex: 1, py: 4 }}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/generate" element={<Generator />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </Container>
-      </Box>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/studio" element={<Studio />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
     </Router>
-  )
-}
+  );
+};
 
-export default App
+export default App;
